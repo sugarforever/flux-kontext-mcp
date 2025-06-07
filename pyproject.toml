@@ -1,0 +1,27 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "flux-kontext-mcp"
+version = "0.0.1"
+description = "Flux.1 Kontext MCP Server"
+readme = "README.md"
+requires-python = ">=3.10"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "mcp==1.8.1",
+    "replicate>=1.0.7",
+    "requests>=2.32.3",
+]
+
+[project.scripts]
+flux-kontext-mcp = "flux_kontext_mcp:main"
+
+[project.urls]
+"Homepage" = "https://github.com/sugarforever/flux-kontext-mcp"
+"Bug Tracker" = "https://github.com/sugarforever/flux-kontext-mcp/issues"
