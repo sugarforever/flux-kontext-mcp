@@ -1,1 +1,1 @@
-# flux-kontext-mcp
+# Flux.1 Kontext MCP Server
