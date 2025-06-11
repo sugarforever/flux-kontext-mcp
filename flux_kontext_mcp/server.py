@@ -66,13 +66,12 @@ def rewrite_kontext_prompt(prompt: str) -> str:
         logger.debug("OpenAI client initialized successfully")
         
         # System prompt to instruct the model
-        system_prompt = """You are a helpful assistant that translates and polishes image generation prompts to English. Your task is to:
+        system_prompt = """You are a helpful assistant that translates and polishes prompts for image editing, to English. Your task is to:
 
 1. If the input prompt is not in English, translate it to English
-2. Polish and improve the prompt for better image generation results
-3. Keep the original intention and meaning intact
-4. Do not add creative elements that weren't in the original prompt
-5. Return only the improved prompt, no explanations or additional text
+2. Keep the original intention and meaning intact
+3. Do not add creative elements that weren't in the original prompt
+4. Return only the improved prompt, no explanations or additional text
 
 Be conservative and faithful to the original intent."""
         
@@ -92,7 +91,7 @@ Be conservative and faithful to the original intent."""
         
         api_duration = time.time() - start_time
         logger.info(f"OpenAI API call completed in {api_duration:.2f} seconds")
-        
+        logger.info(f"OpenAI API response: {response}")
         # Extract the improved prompt
         improved_prompt = response.choices[0].message.content.strip()
         
