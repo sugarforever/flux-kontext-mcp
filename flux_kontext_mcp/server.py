@@ -4,6 +4,7 @@ import argparse
 from typing import Any, Dict, List, Optional
 import replicate
 from mcp.server.fastmcp import FastMCP
+from openai import OpenAI
 
 def get_api_token() -> str:
     """Get the Replicate API token from environment variables"""
@@ -16,6 +17,57 @@ def get_api_token() -> str:
 os.environ["REPLICATE_API_TOKEN"] = get_api_token()
 
 mcp = FastMCP("flux-kontext-pro")
+
+def rewrite_kontext_prompt(prompt: str) -> str:
+    """
+    Rewrite the prompt to be more specific and detailed using OpenAI API.
+    Falls back to original prompt if API is unavailable or fails.
+    """
+    api_key = os.getenv("OPENAI_API_KEY")
+    if not api_key:
+        return prompt
+    
+    try:
+        # Get OpenAI configuration from environment variables
+        base_url = os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1")
+        model_name = os.getenv("OPENAI_MODEL_NAME", "gpt-4o")
+        
+        # Initialize OpenAI client
+        client = OpenAI(
+            api_key=api_key,
+            base_url=base_url
+        )
+        
+        # System prompt to instruct the model
+        system_prompt = """You are a helpful assistant that translates and polishes image generation prompts to English. Your task is to:
+
+1. If the input prompt is not in English, translate it to English
+2. Polish and improve the prompt for better image generation results
+3. Keep the original intention and meaning intact
+4. Do not add creative elements that weren't in the original prompt
+5. Return only the improved prompt, no explanations or additional text
+
+Be conservative and faithful to the original intent."""
+        
+        # Make the API call with temperature 0 for conservative output
+        response = client.chat.completions.create(
+            model=model_name,
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0,
+            max_tokens=500
+        )
+        
+        # Extract the improved prompt
+        improved_prompt = response.choices[0].message.content.strip()
+        return improved_prompt if improved_prompt else prompt
+        
+    except Exception as e:
+        # Return original prompt if any error occurs
+        print(f"Warning: OpenAI API call failed: {str(e)}", file=sys.stderr)
+        return prompt
 
 @mcp.tool()
 def flux_kontext_generate(
@@ -39,9 +91,12 @@ def flux_kontext_generate(
         Dict[str, Any]: Generated image URL and metadata or error information
     """
     try:
+        # Rewrite the prompt for better results
+        rewritten_prompt = rewrite_kontext_prompt(prompt)
+        
         # Prepare the input parameters
         input_params = {
-            "prompt": prompt,
+            "prompt": rewritten_prompt,
             "aspect_ratio": aspect_ratio,
             "output_format": output_format,
             "safety_tolerance": safety_tolerance
@@ -90,9 +145,12 @@ def flux_kontext_async_generate(
         Dict[str, Any]: Prediction object with ID and initial status
     """
     try:
+        # Rewrite the prompt for better results
+        rewritten_prompt = rewrite_kontext_prompt(prompt)
+        
         # Prepare the input parameters
         input_params = {
-            "prompt": prompt,
+            "prompt": rewritten_prompt,
             "aspect_ratio": aspect_ratio,
             "output_format": output_format,
             "safety_tolerance": safety_tolerance
